@@ -14,7 +14,14 @@ An endless run and gun shooter where the player can run on any surface.
 
 ### Genre
 
+- 2D Platformer
+
 ### Mechanics
+
+- Platforming
+- Twin Stick Shooting
+- Endless Level Generation
+- Scoring System
 
 ## References
 
