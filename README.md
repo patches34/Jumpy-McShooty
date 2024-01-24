@@ -1,5 +1,5 @@
 # Jumpy-McShooty
-Made By: `Nodadic Games`
+Made By: `Nodadic Sage Games`
 
 ## Game Identity
 An endless run and gun shooter where the player can run on any surface.
