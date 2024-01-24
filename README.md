@@ -20,6 +20,11 @@ An endless run and gun shooter where the player can run on any surface.
 
 ## References
 
+### Gameplay
+
+-[Contra](https://youtu.be/888vbCs9wLY?si=78Cn3z3Yx-gk-Xqa)  
+  <img src="https://i.ytimg.com/vi/2ab7K_NU9J8/maxresdefault.jpg" width="400">
+
 ### Music
 
 - [-Electroman adventures-](https://www.newgrounds.com/audio/listen/479319)
