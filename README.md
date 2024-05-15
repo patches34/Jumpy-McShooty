@@ -1,5 +1,5 @@
 # Jumpy-McShooty
-Made By: `Nodadic Sage Games`
+Made By: `Nomadic Sage Games`
 
 ## Game Identity
 An endless run and gun shooter where the player can run on any surface.
@@ -28,7 +28,7 @@ An endless run and gun shooter where the player can run on any surface.
 ### Gameplay
 
 - [Contra](https://youtu.be/888vbCs9wLY?si=78Cn3z3Yx-gk-Xqa)
-  - This is the main source of inspiration for the 2d shoorter gameplay and the camera system.
+  - This is the main source of inspiration for the 2d shooter gameplay and the camera system.
   <img src="https://i.ytimg.com/vi/2ab7K_NU9J8/maxresdefault.jpg" width="400">  
 - [Robot Unicorn Attack](https://youtu.be/-n-GvhmSMnU?si=6dP0zmERfDQyYnzF)
   - This is the main source of inspiration for having endless levels.
