@@ -124,7 +124,7 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Impulse);
+                    rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Force);
                 }
             }
             #endregion
@@ -142,8 +142,6 @@ public class Player : MonoBehaviour
         {
             movementDelta.x = 0f;
         }
-
-        
     }
 
     void UpdateMovementState()
