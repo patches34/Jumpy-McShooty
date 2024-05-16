@@ -170,7 +170,7 @@ public class Player : MonoBehaviour
         foreach(ContactPoint2D contact in contactPoints)
         {
             //  Check Ground
-            if (contact.normal.y > 0f)
+            if (velocity.y <= 0f && contact.normal.y > 0f)
             {
                 if(!isGrounded)
                 {
@@ -178,6 +178,12 @@ public class Player : MonoBehaviour
                 }
 
                 isStillGrounded = true;
+            }
+            
+            if (velocity.y > 0f && contact.normal.y < 0f)
+            {
+                velocity.y = 0f;
+
             }
 
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
