@@ -49,6 +49,7 @@ public class Player : MonoBehaviour
     WallState currentWallState = WallState.None;
 
     public Vector2 velocity = Vector2.zero;
+    Vector3 lastPosition = Vector3.zero;
 
     // Start is called before the first frame update
     void Start()
@@ -57,6 +58,8 @@ public class Player : MonoBehaviour
         {
             rbody2d = GetComponent<Rigidbody2D>();
         }
+
+        lastPosition = transform.position;
 
         #region Get the min and max points of the collider
         PhysicsShapeGroup2D shapeGroup = new PhysicsShapeGroup2D();
@@ -118,7 +121,7 @@ public class Player : MonoBehaviour
                 {
                     movementDelta.x *= moveSpeed * Time.deltaTime;
 
-                    velocity = movementDelta;
+                    //velocity = movementDelta;
 
                     rbody2d.MovePosition(movementDelta + (Vector2)transform.position);
                 }
@@ -142,6 +145,9 @@ public class Player : MonoBehaviour
         {
             movementDelta.x = 0f;
         }
+
+        velocity = transform.position - lastPosition;
+        lastPosition = transform.position;
     }
 
     void UpdateMovementState()
