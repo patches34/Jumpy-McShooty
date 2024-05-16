@@ -14,10 +14,6 @@ public enum WallState
 public class Player : MonoBehaviour
 {
     [SerializeField]
-    float mass = 1f;
-    Vector2 acceleration = Vector2.zero, velocity = Vector2.zero, deltaPosition = Vector2.zero;
-
-    [SerializeField]
     float moveSpeed = 5f, airSpeed;
 
     Vector2 movementDirection = Vector2.zero;
@@ -51,6 +47,8 @@ public class Player : MonoBehaviour
 
     [SerializeField]
     WallState currentWallState = WallState.None;
+
+    public Vector2 velocity = Vector2.zero;
 
     // Start is called before the first frame update
     void Start()
@@ -94,45 +92,39 @@ public class Player : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    private void FixedUpdate()
     {
         rbody2d.GetContacts(contactPoints);
 
         UpdateMovementState();
-
-        if(!isGrounded)
-        {
-            acceleration += Physics2D.gravity;
-        }
 
         if (movementDirection != Vector2.zero)
         {
             #region Check if moving into a wall
             if (movementDirection.x > 0 && currentWallState != WallState.OnRight)
             {
-                movementDirection.x = 1f;
+                movementDelta.x = 1f;
             }
             else if (movementDirection.x < 0 && currentWallState != WallState.OnLeft)
             {
-                movementDirection.x = -1f;
+                movementDelta.x = -1f;
             }
             #endregion
 
             #region Horizontal Movement
-            if (movementDirection.x != 0f)
+            if (movementDelta.x != 0f)
             {
                 if (isGrounded)
                 {
-                    movementDelta.x = movementDirection.x * moveSpeed;
+                    movementDelta.x *= moveSpeed * Time.deltaTime;
 
-                    //velocity += movementDelta * Time.deltaTime;
+                    velocity = movementDelta;
 
-                    //rbody2d.MovePosition(movementDelta + (Vector2)transform.position);
+                    rbody2d.MovePosition(movementDelta + (Vector2)transform.position);
                 }
                 else
                 {
-                    
-                    //rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Force);
+                    rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Impulse);
                 }
             }
             #endregion
@@ -142,9 +134,7 @@ public class Player : MonoBehaviour
             {
                 ChangeGroundedStateTo(false);
 
-                //rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-
-                velocity += Vector2.up * jumpForce;
+                rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             }
             #endregion
         }
@@ -153,13 +143,7 @@ public class Player : MonoBehaviour
             movementDelta.x = 0f;
         }
 
-        velocity += acceleration * Time.deltaTime;
-
-        deltaPosition = (velocity + movementDelta) * Time.deltaTime;
-
-        rbody2d.MovePosition((Vector2)transform.position + deltaPosition);
-
-        acceleration = Vector2.zero;
+        
     }
 
     void UpdateMovementState()
@@ -200,27 +184,30 @@ public class Player : MonoBehaviour
         {
             ChangeGroundedStateTo(false);
         }
+        if(isGrounded && !isStillGrounded)
+        {
+            //ChangeGroundedStateTo(false);
+        }
     }
 
     void ChangeGroundedStateTo(bool value)
     {
-        if(value && !isGrounded)
-        {
-            velocity.y = 0f;
-            //rbody2d.velocity = Vector2.zero;
+        isGrounded = value;
 
-            //rbody2d.bodyType = RigidbodyType2D.Kinematic;
+        if(isGrounded)
+        {
+            rbody2d.velocity = Vector2.zero;
+
+            rbody2d.bodyType = RigidbodyType2D.Kinematic;
             //rbody2d.gravityScale = 0f;
         }
         else
         {
-            //rbody2d.bodyType = RigidbodyType2D.Dynamic;
+            rbody2d.bodyType = RigidbodyType2D.Dynamic;
 
-            //rbody2d.AddForce(movementDelta * moveSpeed, ForceMode2D.Force);
+            rbody2d.AddForce(movementDelta * moveSpeed, ForceMode2D.Force);
             //rbody2d.gravityScale = 1f;
         }
-
-        isGrounded = value;
     }
 
     public void OnMove(InputAction.CallbackContext context)
