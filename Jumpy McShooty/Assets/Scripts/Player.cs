@@ -203,36 +203,37 @@ public class Player : MonoBehaviour
             //  This ignores any contacts that are below this Collider's bounds
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
             {
+                Vector2 nudgePos = transform.position;
+                float deltaX = 0f;
+                float offset = -(contact.separation / 2f) + maxBounds.x + (Physics2D.defaultContactOffset / 2f);
+
                 //  Check Right Side
                 if (contact.normal.x < 0f)
                 {
                     currentWallState = WallState.OnRight;
+
+                    deltaX -= offset;
                 }
 
                 //  Check Left Side
                 if (contact.normal.x > 0f)
                 {
                     currentWallState = WallState.OnLeft;
+
+                    deltaX += offset;
                 }
 
                 if (isGrounded)
                 {
-                    Debug.Log("Wall Separation = " + contact.separation);
-
-                    Vector2 nudge = transform.position;
-                    //nudge.x += contact.separation + (Physics2D.defaultContactOffset / 2f);
-                    Debug.Log("Contact Point.x = " + contact.point.x);
-                    float deltaX = contact.point.x - (contact.separation / 2f);
-                    Debug.Log(deltaX);//contact.point.x - (contact.separation / 2f));
-                    //nudge.x -= 3f;
-                    //rbody2d.MovePosition(nudge);
+                    nudgePos.x = contact.point.x + deltaX;
+                    rbody2d.MovePosition(nudgePos);
                 }
             }
         }
 
         if(currentWallState != WallState.None)
         {
-            Debug.LogError("On Wall");
+            //Debug.LogError("On Wall");
         }
 
         if(isGrounded && !isStillGrounded)
