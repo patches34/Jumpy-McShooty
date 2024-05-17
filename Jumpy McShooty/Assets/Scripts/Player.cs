@@ -51,6 +51,8 @@ public class Player : MonoBehaviour
     public Vector2 velocity = Vector2.zero;
     Vector3 lastPosition = Vector3.zero;
 
+    public float moveTimer = 0f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -94,12 +96,32 @@ public class Player : MonoBehaviour
         ChangeGroundedStateTo(false);
     }
 
+    private void Update()
+    {
+        if(currentWallState == WallState.None)
+        {
+            moveTimer += Time.deltaTime;
+        }
+        else
+        {
+            if(moveTimer > 0f)
+            {
+                Debug.Log(moveTimer);
+            }
+
+            moveTimer = 0f;
+        }
+    }
+
     // Update is called once per frame
     private void FixedUpdate()
     {
         rbody2d.GetContacts(contactPoints);
 
-        UpdateMovementState();
+        if(contactPoints.Count > 0)
+        {
+            UpdateMovementState();
+        }        
 
         if (movementDirection != Vector2.zero)
         {
@@ -119,13 +141,13 @@ public class Player : MonoBehaviour
             {
                 if (isGrounded)
                 {
-                    movementDelta.x *= moveSpeed * Time.deltaTime;
+                    movementDelta.x *= moveSpeed;// * Time.deltaTime;
 
                     //velocity = movementDelta;
 
-                    rbody2d.MovePosition(movementDelta + (Vector2)transform.position);
+                    rbody2d.MovePosition((movementDelta * Time.deltaTime) + (Vector2)transform.position);
                 }
-                else
+                else if (Mathf.Abs(rbody2d.velocity.x) < moveSpeed)
                 {
                     rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Force);
                 }
@@ -135,9 +157,13 @@ public class Player : MonoBehaviour
             #region Jump
             if (isGrounded && movementDirection.y > 0)
             {
+                //Debug.Log("jump");
                 ChangeGroundedStateTo(false);
 
-                rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+                Vector2 jumpVect = Vector2.up * jumpForce;
+                //jumpVect.x += movementDelta.x * moveSpeed;
+
+                rbody2d.AddForce(jumpVect, ForceMode2D.Impulse);
             }
             #endregion
         }
@@ -160,8 +186,14 @@ public class Player : MonoBehaviour
             //  Check Ground
             if (contact.normal.y > 0f)
             {
-                if(!isGrounded)
+                //  Check if falling
+                if (!isGrounded && rbody2d.velocity.y < 0f)
                 {
+                    //ChangeGroundedStateTo(true);
+                }
+                if(rbody2d.velocity.y <= 0f)
+                {
+
                     ChangeGroundedStateTo(true);
                 }
 
@@ -184,10 +216,6 @@ public class Player : MonoBehaviour
             }
         }
 
-        if(movementDirection.y < 0f || !isStillGrounded)
-        {
-            ChangeGroundedStateTo(false);
-        }
         if(isGrounded && !isStillGrounded)
         {
             //ChangeGroundedStateTo(false);
@@ -197,6 +225,8 @@ public class Player : MonoBehaviour
     void ChangeGroundedStateTo(bool value)
     {
         isGrounded = value;
+
+        //return;
 
         if(isGrounded)
         {
@@ -209,7 +239,8 @@ public class Player : MonoBehaviour
         {
             rbody2d.bodyType = RigidbodyType2D.Dynamic;
 
-            rbody2d.AddForce(movementDelta * moveSpeed, ForceMode2D.Force);
+            //rbody2d.AddForce(movementDelta * moveSpeed, ForceMode2D.Force);
+            rbody2d.velocity = movementDelta * moveSpeed * Time.deltaTime;
             //rbody2d.gravityScale = 1f;
         }
     }
