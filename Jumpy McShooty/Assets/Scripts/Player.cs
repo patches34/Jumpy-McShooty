@@ -14,14 +14,12 @@ public enum WallState
 public class Player : MonoBehaviour
 {
     [SerializeField]
+    Rigidbody2D rbody2d;
+
+    [SerializeField]
     float moveSpeed = 5f, airSpeed;
 
     Vector2 movementDirection = Vector2.zero;
-
-    [SerializeField]
-    Rigidbody2D rbody2d;
-
-    Vector2 movementDelta = Vector2.zero;
 
     [SerializeField]
     float jumpForce;
@@ -47,6 +45,9 @@ public class Player : MonoBehaviour
 
     [SerializeField]
     WallState currentWallState = WallState.None;
+
+    [SerializeField]
+    Vector2 movementDelta = Vector2.zero;
 
     public Vector2 velocity = Vector2.zero;
     Vector3 lastPosition = Vector3.zero;
@@ -106,7 +107,7 @@ public class Player : MonoBehaviour
         {
             if(moveTimer > 0f)
             {
-                Debug.Log(moveTimer);
+                //Debug.Log(moveTimer);
             }
 
             moveTimer = 0f;
@@ -118,10 +119,7 @@ public class Player : MonoBehaviour
     {
         rbody2d.GetContacts(contactPoints);
 
-        if(contactPoints.Count > 0)
-        {
-            UpdateMovementState();
-        }        
+        UpdateMovementState();
 
         if (movementDirection != Vector2.zero)
         {
@@ -134,6 +132,10 @@ public class Player : MonoBehaviour
             {
                 movementDelta.x = -1f;
             }
+            else
+            {
+                movementDelta.x = 0f;
+            }
             #endregion
 
             #region Horizontal Movement
@@ -141,15 +143,17 @@ public class Player : MonoBehaviour
             {
                 if (isGrounded)
                 {
-                    movementDelta.x *= moveSpeed;// * Time.deltaTime;
-
-                    //velocity = movementDelta;
+                    movementDelta.x *= moveSpeed;
 
                     rbody2d.MovePosition((movementDelta * Time.deltaTime) + (Vector2)transform.position);
                 }
-                else// if (Mathf.Abs(rbody2d.velocity.x) < moveSpeed)
+                else
                 {
-                    rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Force);
+                    if ((movementDelta.x > 0f && rbody2d.velocity.x < moveSpeed)
+                        || (movementDelta.x < 0f && rbody2d.velocity.x > -moveSpeed))
+                    {
+                        rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
+                    }
                 }
             }
             #endregion
@@ -157,13 +161,9 @@ public class Player : MonoBehaviour
             #region Jump
             if (isGrounded && movementDirection.y > 0)
             {
-                //Debug.Log("jump");
                 ChangeGroundedStateTo(false);
 
-                Vector2 jumpVect = Vector2.up * jumpForce;
-                //jumpVect.x += movementDelta.x * moveSpeed;
-
-                rbody2d.AddForce(jumpVect, ForceMode2D.Impulse);
+                rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             }
             #endregion
         }
@@ -193,7 +193,6 @@ public class Player : MonoBehaviour
                 }
                 if(rbody2d.velocity.y <= 0f)
                 {
-
                     ChangeGroundedStateTo(true);
                 }
 
@@ -202,6 +201,8 @@ public class Player : MonoBehaviour
 
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
             {
+                isStillGrounded = true;
+
                 //  Check Right Side
                 if (contact.normal.x < 0f)
                 {
@@ -218,7 +219,7 @@ public class Player : MonoBehaviour
 
         if(isGrounded && !isStillGrounded)
         {
-            //ChangeGroundedStateTo(false);
+            ChangeGroundedStateTo(false);
         }
     }
 
