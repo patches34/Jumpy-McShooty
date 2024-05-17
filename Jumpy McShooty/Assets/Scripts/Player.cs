@@ -147,7 +147,7 @@ public class Player : MonoBehaviour
 
                     rbody2d.MovePosition((movementDelta * Time.deltaTime) + (Vector2)transform.position);
                 }
-                else if (Mathf.Abs(rbody2d.velocity.x) < moveSpeed)
+                else// if (Mathf.Abs(rbody2d.velocity.x) < moveSpeed)
                 {
                     rbody2d.AddForce(movementDelta * airSpeed, ForceMode2D.Force);
                 }
@@ -226,22 +226,17 @@ public class Player : MonoBehaviour
     {
         isGrounded = value;
 
-        //return;
-
         if(isGrounded)
         {
             rbody2d.velocity = Vector2.zero;
 
             rbody2d.bodyType = RigidbodyType2D.Kinematic;
-            //rbody2d.gravityScale = 0f;
         }
         else
         {
             rbody2d.bodyType = RigidbodyType2D.Dynamic;
 
-            //rbody2d.AddForce(movementDelta * moveSpeed, ForceMode2D.Force);
-            rbody2d.velocity = movementDelta * moveSpeed * Time.deltaTime;
-            //rbody2d.gravityScale = 1f;
+            rbody2d.AddForce(movementDelta * moveSpeed * 10f, ForceMode2D.Force);
         }
     }
 
