@@ -10,6 +10,7 @@ public enum WallState
     OnLeft,
     OnRight,
 }
+
 [RequireComponent(typeof(Rigidbody2D))]
 public class Player : MonoBehaviour
 {
@@ -17,14 +18,16 @@ public class Player : MonoBehaviour
     Rigidbody2D rbody2d;
 
     [SerializeField]
-    float moveSpeed = 5f, airSpeed;
-
-    Vector2 movementDirection = Vector2.zero;
-
+    float moveSpeed = 5f;
+    [SerializeField]
+    float airSpeed;
     [SerializeField]
     float jumpForce;
 
-    [SerializeField]
+    Vector2 movementDirection = Vector2.zero;
+
+
+
     bool isGrounded = false;
 
     List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
@@ -43,15 +46,12 @@ public class Player : MonoBehaviour
         return (Vector2)transform.position + maxBounds;
     }
 
-    [SerializeField]
     WallState currentWallState = WallState.None;
 
     Vector2 movementDelta = Vector2.zero;
 
     Vector2 velocity = Vector2.zero;
     Vector3 lastPosition = Vector3.zero;
-
-    float moveTimer = 0f;
 
     // Start is called before the first frame update
     void Start()
@@ -96,23 +96,6 @@ public class Player : MonoBehaviour
         ChangeGroundedStateTo(false);
     }
 
-    private void Update()
-    {
-        if(currentWallState == WallState.None)
-        {
-            moveTimer += Time.deltaTime;
-        }
-        else
-        {
-            if(moveTimer > 0f)
-            {
-                //Debug.Log(moveTimer);
-            }
-
-            moveTimer = 0f;
-        }
-    }
-
     // Update is called once per frame
     private void FixedUpdate()
     {
@@ -146,13 +129,10 @@ public class Player : MonoBehaviour
 
                     rbody2d.MovePosition((movementDelta * Time.deltaTime) + (Vector2)transform.position);
                 }
-                else
-                {
-                    if ((movementDelta.x > 0f && rbody2d.velocity.x < moveSpeed)
+                else if ((movementDelta.x > 0f && rbody2d.velocity.x < moveSpeed)
                         || (movementDelta.x < 0f && rbody2d.velocity.x > -moveSpeed))
-                    {
-                        rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
-                    }
+                {
+                    rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
                 }
             }
             #endregion
@@ -182,23 +162,21 @@ public class Player : MonoBehaviour
 
         foreach(ContactPoint2D contact in contactPoints)
         {
+            #region Check Ground
             //  Check Ground
             if (contact.normal.y > 0f)
             {
                 //  Check if falling
-                if (!isGrounded && rbody2d.velocity.y < 0f)
-                {
-                    //ChangeGroundedStateTo(true);
-                }
                 if(rbody2d.velocity.y <= 0f)
                 {
                     ChangeGroundedStateTo(true);
                 }
 
                 isStillGrounded = true;
-                //Debug.Log("Ground Separation = " + contact.separation);
             }
+            #endregion
 
+            #region Check Walls
             //  Check Walls
             //  This ignores any contacts that are below this Collider's bounds
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
@@ -229,13 +207,10 @@ public class Player : MonoBehaviour
                     rbody2d.MovePosition(nudgePos);
                 }
             }
+            #endregion
         }
 
-        if(currentWallState != WallState.None)
-        {
-            //Debug.LogError("On Wall");
-        }
-
+        //  Check if walked off a ledge
         if(isGrounded && !isStillGrounded)
         {
             ChangeGroundedStateTo(false);
@@ -246,6 +221,7 @@ public class Player : MonoBehaviour
     {
         isGrounded = value;
 
+        //  Change Rbody Type
         if(isGrounded)
         {
             rbody2d.velocity = Vector2.zero;
