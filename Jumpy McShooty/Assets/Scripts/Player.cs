@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -138,11 +139,9 @@ public class Player : MonoBehaviour
             #endregion
 
             #region Jump
-            if (isGrounded && movementDirection.y > 0)
+            if(movementDirection.y > 0)
             {
-                ChangeGroundedStateTo(false);
-
-                rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+                Jump();
             }
             #endregion
         }
@@ -242,7 +241,32 @@ public class Player : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        movementDirection = context.ReadValue<Vector2>();
+        movementDirection.x = context.ReadValue<Vector2>().x;
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        switch(context.phase)
+        {
+            case InputActionPhase.Performed:
+                //Debug.Log("Jump");
+                movementDirection.y = 1f;
+                break;
+            default:
+                //Debug.Log("Done");
+                movementDirection.y = 0f;
+                break;
+        }
+    }
+
+    void Jump()
+    {
+        if (isGrounded)
+        {
+            ChangeGroundedStateTo(false);
+
+            rbody2d.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        }
     }
 
     private void OnDrawGizmosSelected()
