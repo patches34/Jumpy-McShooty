@@ -206,6 +206,10 @@ public class Player : MonoBehaviour
                     nudgePos.x = contact.point.x + deltaX;
                     rbody2d.MovePosition(nudgePos);
                 }
+                else if(rbody2d.velocity.y > 0f)
+                {
+                    rbody2d.velocity = Vector2.zero;
+                }
             }
             #endregion
         }
