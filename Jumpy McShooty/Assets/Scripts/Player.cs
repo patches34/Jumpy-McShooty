@@ -28,7 +28,7 @@ public class Player : MonoBehaviour
     Vector2 movementDirection = Vector2.zero;
 
 
-
+    [SerializeField]
     bool isGrounded = false;
 
     List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
@@ -47,6 +47,7 @@ public class Player : MonoBehaviour
         return (Vector2)transform.position + maxBounds;
     }
 
+    [SerializeField]
     WallState currentWallState = WallState.None;
 
     Vector2 movementDelta = Vector2.zero;
@@ -134,6 +135,7 @@ public class Player : MonoBehaviour
                         || (movementDelta.x < 0f && rbody2d.velocity.x > -moveSpeed))
                 {
                     rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
+                    Debug.Log("air move");
                 }
             }
             #endregion
@@ -158,8 +160,9 @@ public class Player : MonoBehaviour
     {
         currentWallState = WallState.None;
         bool isStillGrounded = false;
+        float contactOffset = Physics2D.defaultContactOffset / 2f;
 
-        foreach(ContactPoint2D contact in contactPoints)
+        foreach (ContactPoint2D contact in contactPoints)
         {
             #region Check Ground
             //  Check Ground
@@ -168,7 +171,14 @@ public class Player : MonoBehaviour
                 //  Check if falling
                 if(rbody2d.velocity.y <= 0f)
                 {
-                    ChangeGroundedStateTo(true);
+                    //  Ignore grounding on the touching wall
+                    //  need to improve this because the wall state is not current at this point in the code
+                    if (currentWallState == WallState.None
+                        || (currentWallState == WallState.OnRight && contact.point.x < GetMaxBound().x)
+                        || (currentWallState == WallState.OnLeft && contact.point.x > GetMinBound().x))
+                    {
+                        ChangeGroundedStateTo(true);
+                    }
                 }
 
                 isStillGrounded = true;
@@ -181,8 +191,9 @@ public class Player : MonoBehaviour
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
             {
                 Vector2 nudgePos = transform.position;
-                float deltaX = 0f;
-                float offset = -(contact.separation / 2f) + maxBounds.x + (Physics2D.defaultContactOffset / 2f);
+                //float deltaX = 0f;
+                double offset = -(contact.separation / 2f) + maxBounds.x + (Physics2D.defaultContactOffset * .9f);
+                double deltaX = 0f;
 
                 //  Check Right Side
                 if (contact.normal.x < 0f)
@@ -200,14 +211,28 @@ public class Player : MonoBehaviour
                     deltaX += offset;
                 }
 
+                nudgePos.x = (float)(contact.point.x + deltaX);
+                //  If on the ground
                 if (isGrounded)
                 {
-                    nudgePos.x = contact.point.x + deltaX;
                     rbody2d.MovePosition(nudgePos);
                 }
-                else if(rbody2d.velocity.y > 0f)
+                else
                 {
-                    rbody2d.velocity = Vector2.zero;
+                    //transform.position = nudgePos;
+                    Vector3 rbV = rbody2d.velocity;
+                    rbody2d.bodyType = RigidbodyType2D.Kinematic;
+                    rbody2d.MovePosition(nudgePos);
+                    rbody2d.bodyType = RigidbodyType2D.Dynamic;
+                    rbody2d.velocity = rbV;
+                }
+                //  If moving up
+                if (rbody2d.velocity.y > 0f)
+                {
+                    if (movementDirection.x != 0f || rbody2d.velocity.x != 0f)
+                    {
+                        rbody2d.velocity = Vector2.zero;
+                    }
                 }
             }
             #endregion
