@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Color = UnityEngine.Color;
 
 public enum WallState
 {
@@ -27,9 +29,9 @@ public class Player : MonoBehaviour
 
     Vector2 movementDirection = Vector2.zero;
 
-
     [SerializeField]
     bool isGrounded = false;
+    Vector2 groundPoint = Vector2.negativeInfinity;
 
     List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
     List<Vector2> groundPoints = new List<Vector2>();
@@ -49,11 +51,14 @@ public class Player : MonoBehaviour
 
     [SerializeField]
     WallState currentWallState = WallState.None;
+    Vector2 wallPoint = Vector2.negativeInfinity;
 
     Vector2 movementDelta = Vector2.zero;
 
     Vector2 velocity = Vector2.zero;
     Vector3 lastPosition = Vector3.zero;
+
+    Vector2 contactOffset = Vector2.zero;
 
     // Start is called before the first frame update
     void Start()
@@ -94,6 +99,9 @@ public class Player : MonoBehaviour
             }
         }
         #endregion
+
+        contactOffset.x = maxBounds.x + (Physics2D.defaultContactOffset * .9f);
+        contactOffset.y = maxBounds.y + Physics2D.defaultContactOffset / 2f;
 
         ChangeGroundedStateTo(false);
     }
@@ -178,6 +186,9 @@ public class Player : MonoBehaviour
                         || (currentWallState == WallState.OnLeft && contact.point.x > GetMinBound().x))
                     {
                         ChangeGroundedStateTo(true);
+
+                        groundPoint.x = transform.position.x;
+                        groundPoint.y = contact.point.y - contact.separation / 2f;
                     }
                 }
 
@@ -195,12 +206,16 @@ public class Player : MonoBehaviour
                 double offset = -(contact.separation / 2f) + maxBounds.x + (Physics2D.defaultContactOffset * .9f);
                 double deltaX = 0f;
 
+                wallPoint.y = transform.position.y;
+                wallPoint.x = contact.point.x;
+
                 //  Check Right Side
                 if (contact.normal.x < 0f)
                 {
                     currentWallState = WallState.OnRight;
 
                     deltaX -= offset;
+                    wallPoint.x += contact.separation / 2f;
                 }
 
                 //  Check Left Side
@@ -209,13 +224,15 @@ public class Player : MonoBehaviour
                     currentWallState = WallState.OnLeft;
 
                     deltaX += offset;
+                    wallPoint.x -= contact.separation / 2f;
                 }
 
                 nudgePos.x = (float)(contact.point.x + deltaX);
+                
                 //  If on the ground
-                if (isGrounded)
+                /*if (isGrounded)
                 {
-                    rbody2d.MovePosition(nudgePos);
+                    //rbody2d.MovePosition(nudgePos);
                 }
                 else
                 {
@@ -225,7 +242,7 @@ public class Player : MonoBehaviour
                     rbody2d.MovePosition(nudgePos);
                     rbody2d.bodyType = RigidbodyType2D.Dynamic;
                     rbody2d.velocity = rbV;
-                }
+                }*/
                 //  If moving up
                 if (rbody2d.velocity.y > 0f)
                 {
@@ -242,6 +259,11 @@ public class Player : MonoBehaviour
         if(isGrounded && !isStillGrounded)
         {
             ChangeGroundedStateTo(false);
+        }
+
+        if(currentWallState == WallState.None)
+        {
+            wallPoint = Vector2.negativeInfinity;
         }
     }
 
@@ -261,6 +283,8 @@ public class Player : MonoBehaviour
             rbody2d.bodyType = RigidbodyType2D.Dynamic;
 
             rbody2d.AddForce(movementDelta * moveSpeed * 10f, ForceMode2D.Force);
+
+            groundPoint = Vector2.negativeInfinity;
         }
     }
 
@@ -298,7 +322,7 @@ public class Player : MonoBehaviour
     {
         wallPoints.Clear();
         groundPoints.Clear();
-        foreach(ContactPoint2D point in contactPoints)
+        /*foreach(ContactPoint2D point in contactPoints)
         {
             if(point.normal.y > 0f)
             {
@@ -317,6 +341,20 @@ public class Player : MonoBehaviour
                 Gizmos.color = Color.blue;
             }
             Gizmos.DrawLine(transform.position, point.point);
+        }*/
+
+        if (groundPoint.y != float.NegativeInfinity)
+        {
+            Gizmos.color = Color.red;
+
+            Gizmos.DrawLine(transform.position, groundPoint);
+        }
+
+        if (wallPoint.y != float.NegativeInfinity)
+        {
+            Gizmos.color = Color.green;
+
+            Gizmos.DrawLine(transform.position, wallPoint);
         }
     }
 }
