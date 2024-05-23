@@ -164,8 +164,10 @@ public class Player : MonoBehaviour
         lastPosition = transform.position;
     }
 
-    void UpdateMovementState()
+    Vector2 UpdateMovementState()
     {
+        Vector2 nudgeDelta = Vector2.zero;
+
         currentWallState = WallState.None;
         bool isStillGrounded = false;
         float contactOffset = Physics2D.defaultContactOffset / 2f;
@@ -189,6 +191,8 @@ public class Player : MonoBehaviour
 
                         groundPoint.x = transform.position.x;
                         groundPoint.y = contact.point.y - contact.separation / 2f;
+
+                        nudgeDelta.y = groundPoint.y;
                     }
                 }
 
@@ -228,6 +232,7 @@ public class Player : MonoBehaviour
                 }
 
                 nudgePos.x = (float)(contact.point.x + deltaX);
+                nudgeDelta.x = nudgePos.x;
                 
                 //  If on the ground
                 /*if (isGrounded)
@@ -248,7 +253,7 @@ public class Player : MonoBehaviour
                 {
                     if (movementDirection.x != 0f || rbody2d.velocity.x != 0f)
                     {
-                        rbody2d.velocity = Vector2.zero;
+                        //rbody2d.velocity = Vector2.zero;
                     }
                 }
             }
@@ -265,6 +270,8 @@ public class Player : MonoBehaviour
         {
             wallPoint = Vector2.negativeInfinity;
         }
+
+        return nudgeDelta;
     }
 
     void ChangeGroundedStateTo(bool value)
