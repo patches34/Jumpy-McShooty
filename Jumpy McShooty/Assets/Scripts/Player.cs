@@ -109,9 +109,34 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     private void FixedUpdate()
     {
+        WallState lastWallState = currentWallState;// == WallState.None;
         rbody2d.GetContacts(contactPoints);
 
-        UpdateMovementState();
+        Vector3 nudgePos = UpdateMovementState();
+
+        if(currentWallState != WallState.None)
+        {
+            if(lastWallState == WallState.None)
+            {
+                //  Store velocity
+                Vector2 rbV = rbody2d.velocity;
+                rbody2d.bodyType = RigidbodyType2D.Kinematic;
+                rbody2d.MovePosition(nudgePos);
+
+                if (!isGrounded)
+                {
+                    rbody2d.bodyType = RigidbodyType2D.Dynamic;
+                    //  Restore previous velocity
+                    rbody2d.velocity = rbV;
+                }
+            }
+            //  Stop vertical movement if jumped sideways up into a wall
+            if(!isGrounded && rbody2d.velocity.y > 0f
+                && (currentWallState == WallState.OnLeft && rbody2d.velocity.x < 0f || currentWallState == WallState.OnRight && rbody2d.velocity.x > 0f))
+            {
+                rbody2d.velocity = Vector2.zero;
+            }
+        }
 
         if (movementDirection != Vector2.zero)
         {
@@ -166,7 +191,7 @@ public class Player : MonoBehaviour
 
     Vector2 UpdateMovementState()
     {
-        Vector2 nudgeDelta = Vector2.zero;
+        Vector2 nudgeDelta = transform.position;
 
         currentWallState = WallState.None;
         bool isStillGrounded = false;
@@ -192,7 +217,7 @@ public class Player : MonoBehaviour
                         groundPoint.x = transform.position.x;
                         groundPoint.y = contact.point.y - contact.separation / 2f;
 
-                        nudgeDelta.y = groundPoint.y;
+                        //nudgeDelta.y = groundPoint.y;
                     }
                 }
 
@@ -205,9 +230,7 @@ public class Player : MonoBehaviour
             //  This ignores any contacts that are below this Collider's bounds
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
             {
-                Vector2 nudgePos = transform.position;
-                //float deltaX = 0f;
-                double offset = -(contact.separation / 2f) + maxBounds.x + (Physics2D.defaultContactOffset * .9f);
+                double offset = maxBounds.x + (Physics2D.defaultContactOffset / 2f);
                 double deltaX = 0f;
 
                 wallPoint.y = transform.position.y;
@@ -231,31 +254,7 @@ public class Player : MonoBehaviour
                     wallPoint.x -= contact.separation / 2f;
                 }
 
-                nudgePos.x = (float)(contact.point.x + deltaX);
-                nudgeDelta.x = nudgePos.x;
-                
-                //  If on the ground
-                /*if (isGrounded)
-                {
-                    //rbody2d.MovePosition(nudgePos);
-                }
-                else
-                {
-                    //transform.position = nudgePos;
-                    Vector3 rbV = rbody2d.velocity;
-                    rbody2d.bodyType = RigidbodyType2D.Kinematic;
-                    rbody2d.MovePosition(nudgePos);
-                    rbody2d.bodyType = RigidbodyType2D.Dynamic;
-                    rbody2d.velocity = rbV;
-                }*/
-                //  If moving up
-                if (rbody2d.velocity.y > 0f)
-                {
-                    if (movementDirection.x != 0f || rbody2d.velocity.x != 0f)
-                    {
-                        //rbody2d.velocity = Vector2.zero;
-                    }
-                }
+                nudgeDelta.x = wallPoint.x + (float)deltaX;
             }
             #endregion
         }
@@ -329,7 +328,7 @@ public class Player : MonoBehaviour
     {
         wallPoints.Clear();
         groundPoints.Clear();
-        /*foreach(ContactPoint2D point in contactPoints)
+        foreach(ContactPoint2D point in contactPoints)
         {
             if(point.normal.y > 0f)
             {
@@ -348,7 +347,7 @@ public class Player : MonoBehaviour
                 Gizmos.color = Color.blue;
             }
             Gizmos.DrawLine(transform.position, point.point);
-        }*/
+        }
 
         if (groundPoint.y != float.NegativeInfinity)
         {
