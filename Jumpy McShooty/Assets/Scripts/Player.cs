@@ -38,6 +38,9 @@ public class Player : MonoBehaviour
 
     Vector2 minBounds = Vector2.positiveInfinity, maxBounds = Vector2.negativeInfinity;
 
+    [SerializeField]
+    PlayerGun myGun;
+
     public Vector2 GetMinBound()
     {
         return (Vector2)transform.position + minBounds;
