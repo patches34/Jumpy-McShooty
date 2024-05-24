@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Color = UnityEngine.Color;
 
 public enum WallState
 {
@@ -29,9 +24,13 @@ public class Player : MonoBehaviour
 
     Vector2 movementDirection = Vector2.zero;
 
-    [SerializeField]
     bool isGrounded = false;
     Vector2 groundPoint = Vector2.negativeInfinity;
+
+    WallState currentWallState = WallState.None;
+    Vector2 wallPoint = Vector2.negativeInfinity;
+
+    Vector2 movementDelta = Vector2.zero;
 
     List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
     List<Vector2> groundPoints = new List<Vector2>();
@@ -49,15 +48,6 @@ public class Player : MonoBehaviour
         return (Vector2)transform.position + maxBounds;
     }
 
-    [SerializeField]
-    WallState currentWallState = WallState.None;
-    Vector2 wallPoint = Vector2.negativeInfinity;
-
-    Vector2 movementDelta = Vector2.zero;
-
-    Vector2 velocity = Vector2.zero;
-    Vector3 lastPosition = Vector3.zero;
-
     Vector2 contactOffset = Vector2.zero;
 
     // Start is called before the first frame update
@@ -67,8 +57,6 @@ public class Player : MonoBehaviour
         {
             rbody2d = GetComponent<Rigidbody2D>();
         }
-
-        lastPosition = transform.position;
 
         #region Get the min and max points of the collider
         PhysicsShapeGroup2D shapeGroup = new PhysicsShapeGroup2D();
@@ -100,7 +88,7 @@ public class Player : MonoBehaviour
         }
         #endregion
 
-        contactOffset.x = maxBounds.x + (Physics2D.defaultContactOffset * .9f);
+        contactOffset.x = maxBounds.x + (Physics2D.defaultContactOffset / 2f);
         contactOffset.y = maxBounds.y + Physics2D.defaultContactOffset / 2f;
 
         ChangeGroundedStateTo(false);
@@ -184,9 +172,6 @@ public class Player : MonoBehaviour
         {
             movementDelta.x = 0f;
         }
-
-        velocity = transform.position - lastPosition;
-        lastPosition = transform.position;
     }
 
     Vector2 UpdateMovementState()
@@ -195,7 +180,6 @@ public class Player : MonoBehaviour
 
         currentWallState = WallState.None;
         bool isStillGrounded = false;
-        float contactOffset = Physics2D.defaultContactOffset / 2f;
 
         foreach (ContactPoint2D contact in contactPoints)
         {
@@ -230,7 +214,7 @@ public class Player : MonoBehaviour
             //  This ignores any contacts that are below this Collider's bounds
             if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
             {
-                double offset = maxBounds.x + (Physics2D.defaultContactOffset / 2f);
+                double offset = contactOffset.x;
                 double deltaX = 0f;
 
                 wallPoint.y = transform.position.y;
