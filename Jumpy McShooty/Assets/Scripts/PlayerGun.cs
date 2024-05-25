@@ -6,6 +6,7 @@ public class PlayerGun : MonoBehaviour
 {
     [SerializeField]
     SpriteRenderer spriteRenderer;
+    Vector3 normalScale = Vector3.zero, flippedScale = Vector3.zero;
 
     [SerializeField]
     Vector3 rotationOffset;
@@ -31,11 +32,20 @@ public class PlayerGun : MonoBehaviour
     [SerializeField]
     Bullet bulletPrefab;
 
+    [SerializeField]
+    Transform spawnPos;
+
 
     // Start is called before the first frame update
     void Start()
     {
         offsetRot = Quaternion.Euler(rotationOffset);
+
+        normalScale = transform.localScale;
+
+        flippedScale = normalScale;
+        flippedScale.y *= -1f;
+
     }
 
     // Update is called once per frame
@@ -50,13 +60,15 @@ public class PlayerGun : MonoBehaviour
         #region Update Position and Rotation
         if (transform.rotation.eulerAngles.z > 90f && transform.rotation.eulerAngles.z < 270f)
         {
-            spriteRenderer.flipY = true;
+            transform.localScale = flippedScale;
+            //spriteRenderer.flipY = true;
 
             newGunPos.x = positionOffset.x;
         }
         else
         {
-            spriteRenderer.flipY = false;
+            transform.localScale = normalScale;
+            //spriteRenderer.flipY = false;
 
             newGunPos.x = -positionOffset.x;
         }
@@ -105,7 +117,7 @@ public class PlayerGun : MonoBehaviour
     {
         //Debug.Log("Fire!");
 
-        Bullet newBullet = Instantiate(bulletPrefab, transform.position, Quaternion.Euler(direction));
+        Bullet newBullet = Instantiate(bulletPrefab, spawnPos.position, Quaternion.Euler(direction));
 
         newBullet.Init(direction);
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -10,6 +11,9 @@ public class Bullet : MonoBehaviour
     float speed;
 
     Vector3 direction;
+
+
+    List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
 
     // Start is called before the first frame update
     void Start()
@@ -26,8 +30,27 @@ public class Bullet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 delta = direction * speed * Time.deltaTime;
+        rBody.GetContacts(contactPoints);
 
-        rBody.MovePosition(transform.position + delta);
+        if(contactPoints.Count <= 0 )
+        {
+            Vector3 delta = direction * speed * Time.deltaTime;
+
+            rBody.MovePosition(transform.position + delta);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        foreach (ContactPoint2D point in contactPoints)
+        {
+            Gizmos.color = Color.blue;
+
+            Gizmos.DrawLine(transform.position, point.point);
+        }
     }
 }
