@@ -35,6 +35,8 @@ public class PlayerGun : MonoBehaviour
     [SerializeField]
     Transform spawnPos;
 
+    public Vector2 LookVect;
+
 
     // Start is called before the first frame update
     void Start()
@@ -111,6 +113,13 @@ public class PlayerGun : MonoBehaviour
     public void OnFire(InputAction.CallbackContext context)
     {
         isFiring = context.ReadValue<float>() != 0f;
+    }
+
+    public void OnLook(InputAction.CallbackContext context)
+    {
+        LookVect = context.ReadValue<Vector2>();
+
+        //if(context.control.device.)
     }
 
     void Fire()
