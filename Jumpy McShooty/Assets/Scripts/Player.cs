@@ -41,6 +41,9 @@ public class Player : MonoBehaviour
     [SerializeField]
     PlayerGun myGun;
 
+    [SerializeField]
+    bool useWallGrab = true;
+
     public Vector2 GetMinBound()
     {
         return (Vector2)transform.position + minBounds;
@@ -155,17 +158,20 @@ public class Player : MonoBehaviour
 
                     rbody2d.MovePosition((movementDelta * Time.deltaTime) + (Vector2)transform.position);
                 }
-                else if ((movementDelta.x > 0f && rbody2d.velocity.x < moveSpeed)
-                        || (movementDelta.x < 0f && rbody2d.velocity.x > -moveSpeed))
+                else
                 {
-                    rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
-                    Debug.Log("air move");
+                    if ((movementDelta.x > 0f && rbody2d.velocity.x < moveSpeed)
+                        || (movementDelta.x < 0f && rbody2d.velocity.x > -moveSpeed))
+                    {
+                        rbody2d.AddForce(movementDelta * airSpeed * 10f, ForceMode2D.Force);
+                    }
                 }
             }
             #endregion
+            
 
             #region Jump
-            if(movementDirection.y > 0)
+            if (movementDirection.y > 0)
             {
                 Jump();
             }
@@ -174,6 +180,19 @@ public class Player : MonoBehaviour
         else
         {
             movementDelta.x = 0f;
+        }
+
+        if (useWallGrab && !isGrounded)
+        {
+            if ((currentWallState == WallState.OnLeft && movementDirection.x < 0f) || (currentWallState == WallState.OnRight && movementDirection.x > 0f))
+            {
+                //rbody2d.velocity = Vector2.zero;
+                ChangeRBodyStateTo(RigidbodyType2D.Kinematic);
+            }
+            else
+            {
+                ChangeRBodyStateTo(RigidbodyType2D.Dynamic);
+            }
         }
     }
 
@@ -267,17 +286,30 @@ public class Player : MonoBehaviour
         //  Change Rbody Type
         if(isGrounded)
         {
-            rbody2d.velocity = Vector2.zero;
-
-            rbody2d.bodyType = RigidbodyType2D.Kinematic;
+            ChangeRBodyStateTo(RigidbodyType2D.Kinematic);
         }
         else
         {
-            rbody2d.bodyType = RigidbodyType2D.Dynamic;
+            ChangeRBodyStateTo(RigidbodyType2D.Dynamic);
 
             rbody2d.AddForce(movementDelta * moveSpeed * 10f, ForceMode2D.Force);
 
             groundPoint = Vector2.negativeInfinity;
+        }
+    }
+
+    void ChangeRBodyStateTo(RigidbodyType2D type)
+    {
+        switch (type)
+        {
+            case RigidbodyType2D.Kinematic:
+                rbody2d.velocity = Vector2.zero;
+
+                rbody2d.bodyType = RigidbodyType2D.Kinematic;
+                break;
+            case RigidbodyType2D.Dynamic:
+                rbody2d.bodyType = RigidbodyType2D.Dynamic;
+                break;
         }
     }
 
