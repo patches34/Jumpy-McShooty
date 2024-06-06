@@ -5,28 +5,24 @@ using UnityEngine.InputSystem;
 public class PlayerGun : MonoBehaviour
 {
     [SerializeField]
+    Player player;
+
+    [SerializeField]
+    Transform playerArm;
+
+    [SerializeField]
     SpriteRenderer spriteRenderer;
-    Vector3 normalScale = Vector3.zero, flippedScale = Vector3.zero;
+    Vector3 normalScale = Vector3.zero, flippedYScale = Vector3.zero;
 
     [SerializeField]
     Vector3 rotationOffset;
-    Quaternion offsetRot;
+    Quaternion offsetQuat;
 
-    [SerializeField]
-    Vector2 positionOffset;
-    [SerializeField]
-    float verticaleAimWindow;
-    Vector3 newGunPos = Vector3.zero;
-
-    Vector3 mouseWorldPos = Vector3.zero;
-    Vector3 direction = Vector3.right;
-    public Vector3 Direction { get { return direction; } }
-
+    Vector3 aimDirection = Vector3.right;
 
     [SerializeField]
     float fireRate;
     float fireTimer;
-    [SerializeField]
     bool isFiring = false;
 
     [SerializeField]
@@ -35,62 +31,36 @@ public class PlayerGun : MonoBehaviour
     [SerializeField]
     Transform spawnPos;
 
-    public Vector2 LookVect;
-
+    const string k_MOUSE_DEVICE = "Mouse";
 
     // Start is called before the first frame update
     void Start()
     {
-        offsetRot = Quaternion.Euler(rotationOffset);
+        offsetQuat = Quaternion.Euler(rotationOffset);
 
         normalScale = transform.localScale;
 
-        flippedScale = normalScale;
-        flippedScale.y *= -1f;
+        flippedYScale = normalScale;
+        flippedYScale.y *= -1f;
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        mouseWorldPos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        mouseWorldPos.z = transform.position.z;
-
-        direction = mouseWorldPos - transform.parent.position;
-        transform.rotation = Quaternion.LookRotation(Vector3.back, direction.normalized) * offsetRot;
+        //  Look at the current aim direction
+        playerArm.rotation = Quaternion.LookRotation(Vector3.back, aimDirection.normalized) * offsetQuat;
 
         #region Update Position and Rotation
-        if (transform.rotation.eulerAngles.z > 90f && transform.rotation.eulerAngles.z < 270f)
+        if (playerArm.rotation.eulerAngles.z > 90f
+            && playerArm.rotation.eulerAngles.z < 270f)
         {
-            transform.localScale = flippedScale;
-            //spriteRenderer.flipY = true;
-
-            newGunPos.x = positionOffset.x;
+            transform.localScale = flippedYScale;
         }
         else
         {
             transform.localScale = normalScale;
-            //spriteRenderer.flipY = false;
-
-            newGunPos.x = -positionOffset.x;
         }
-
-        if(transform.rotation.eulerAngles.z > 90f - verticaleAimWindow && transform.rotation.eulerAngles.z < 90f + verticaleAimWindow)
-        {
-            newGunPos.y = positionOffset.y;
-            newGunPos.x = 0f;
-        }
-        else if (transform.rotation.eulerAngles.z > 270f - verticaleAimWindow && transform.rotation.eulerAngles.z < 270f + verticaleAimWindow)
-        {
-            newGunPos.y = -positionOffset.y;
-            newGunPos.x = 0f;
-        }
-        else
-        {
-            newGunPos.y = 0f;
-        }
-
-        transform.localPosition = newGunPos;
         #endregion
 
         #region Firing Logic
@@ -117,18 +87,26 @@ public class PlayerGun : MonoBehaviour
 
     public void OnLook(InputAction.CallbackContext context)
     {
-        LookVect = context.ReadValue<Vector2>();
+        Vector2 LookVect = context.ReadValue<Vector2>();
 
-        //if(context.control.device.)
+        if(context.control.device.displayName.Equals(k_MOUSE_DEVICE))
+        {
+            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(LookVect);
+            mouseWorldPos.z = transform.position.z;
+
+            aimDirection = mouseWorldPos - player.transform.position;
+        }
+        else
+        {
+            aimDirection = LookVect.normalized;
+        }
     }
 
     void Fire()
     {
-        //Debug.Log("Fire!");
+        Bullet newBullet = Instantiate(bulletPrefab, spawnPos.position, Quaternion.Euler(aimDirection));
 
-        Bullet newBullet = Instantiate(bulletPrefab, spawnPos.position, Quaternion.Euler(direction));
-
-        newBullet.Init(direction);
+        newBullet.Init(aimDirection);
 
         fireTimer = fireRate;
     }
@@ -137,6 +115,6 @@ public class PlayerGun : MonoBehaviour
     {
         Gizmos.color = Color.magenta;
 
-        Gizmos.DrawLine(transform.position, mouseWorldPos);
+        Gizmos.DrawRay(transform.position, aimDirection);
     }
 }

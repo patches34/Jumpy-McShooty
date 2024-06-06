@@ -26,9 +26,11 @@ public class Player : MonoBehaviour
 
     bool isGrounded = false;
     Vector2 groundPoint = Vector2.negativeInfinity;
+    public bool IsGrounded { get { return isGrounded; } }
 
     WallState currentWallState = WallState.None;
     Vector2 wallPoint = Vector2.negativeInfinity;
+    public WallState CurrentWallState { get { return currentWallState; } }
 
     Vector2 movementDelta = Vector2.zero;
 
@@ -368,7 +370,7 @@ public class Player : MonoBehaviour
             Gizmos.DrawLine(transform.position, point.point);
         }
 
-        if (groundPoint.y != float.NegativeInfinity)
+        /*if (groundPoint.y != float.NegativeInfinity)
         {
             Gizmos.color = Color.red;
 
@@ -380,6 +382,6 @@ public class Player : MonoBehaviour
             Gizmos.color = Color.green;
 
             Gizmos.DrawLine(transform.position, wallPoint);
-        }
+        }*/
     }
 }

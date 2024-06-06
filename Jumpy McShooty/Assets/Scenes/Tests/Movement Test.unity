@@ -1323,13 +1323,13 @@ MonoBehaviour:
     m_ActionName: Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
+      - m_Target: {fileID: 1789954766}
+        m_TargetAssemblyTypeName: PlayerGun, Assembly-CSharp
+        m_MethodName: OnLook
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3362,11 +3362,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6929ef1b3cb49b443855e595f437b21c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &1953288824 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2595201075691314444, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-  m_PrefabInstance: {fileID: 5341273022578952466}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2087977823
 GameObject:
   m_ObjectHideFlags: 3
@@ -3503,29 +3498,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2408666042062470646, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-      propertyPath: m_Layer
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 4024238802071238591, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-      propertyPath: spawnPos
-      value: 
-      objectReference: {fileID: 1953288824}
-    - target: {fileID: 4024238802071238591, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-      propertyPath: bulletPrefab
-      value: 
-      objectReference: {fileID: 6546549068643336342, guid: f26867b173ba1904b8f6f5762979c5ad, type: 3}
     - target: {fileID: 6970952388845887413, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 6970952388845887413, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-      propertyPath: m_Layer
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 7720276740654697059, guid: ad3219417cacbbc4ab1fd56682df0602, type: 3}
-      propertyPath: m_Layer
-      value: 6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
