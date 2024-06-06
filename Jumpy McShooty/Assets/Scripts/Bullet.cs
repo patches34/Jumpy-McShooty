@@ -12,9 +12,6 @@ public class Bullet : MonoBehaviour
 
     Vector3 direction;
 
-
-    List<ContactPoint2D> contactPoints = new List<ContactPoint2D>();
-
     // Start is called before the first frame update
     void Start()
     {
@@ -30,27 +27,25 @@ public class Bullet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rBody.GetContacts(contactPoints);
+        Vector3 delta = direction * speed * Time.deltaTime;
 
-        if(contactPoints.Count <= 0 )
-        {
-            Vector3 delta = direction * speed * Time.deltaTime;
-
-            rBody.MovePosition(transform.position + delta);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        rBody.MovePosition(transform.position + delta);
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        foreach (ContactPoint2D point in contactPoints)
+        switch(collision.gameObject.layer)
         {
-            Gizmos.color = Color.blue;
-
-            Gizmos.DrawLine(transform.position, point.point);
+            //  Enemy
+            case 8:
+                collision.GetComponent<Enemy>().GetHit();
+                break;
+            // Level
+            case 7:
+                // Do hit particle effect here
+                break;
         }
+
+        Destroy(gameObject);
     }
 }
