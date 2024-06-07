@@ -42,7 +42,6 @@ public class PlayerGun : MonoBehaviour
 
         flippedYScale = normalScale;
         flippedYScale.y *= -1f;
-
     }
 
     // Update is called once per frame

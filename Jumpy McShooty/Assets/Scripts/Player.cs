@@ -25,11 +25,9 @@ public class Player : MonoBehaviour
     Vector2 movementDirection = Vector2.zero;
 
     bool isGrounded = false;
-    Vector2 groundPoint = Vector2.negativeInfinity;
     public bool IsGrounded { get { return isGrounded; } }
 
     WallState currentWallState = WallState.None;
-    Vector2 wallPoint = Vector2.negativeInfinity;
     public WallState CurrentWallState { get { return currentWallState; } }
 
     Vector2 movementDelta = Vector2.zero;
@@ -57,6 +55,10 @@ public class Player : MonoBehaviour
     }
 
     Vector2 contactOffset = Vector2.zero;
+    Vector3 nudgePos = Vector3.zero;
+
+    [SerializeField]
+    LayerMask groundLayer;
 
     // Start is called before the first frame update
     void Start()
@@ -96,8 +98,8 @@ public class Player : MonoBehaviour
         }
         #endregion
 
-        contactOffset.x = maxBounds.x + (Physics2D.defaultContactOffset / 2f);
-        contactOffset.y = maxBounds.y + Physics2D.defaultContactOffset / 2f;
+        contactOffset.x = maxBounds.x + (Physics2D.defaultContactOffset * 2f);
+        contactOffset.y = maxBounds.y + (Physics2D.defaultContactOffset * 2f);
 
         ChangeGroundedStateTo(false);
     }
@@ -108,30 +110,29 @@ public class Player : MonoBehaviour
         WallState lastWallState = currentWallState;// == WallState.None;
         rbody2d.GetContacts(contactPoints);
 
-        Vector3 nudgePos = UpdateMovementState();
+        nudgePos = UpdateMovementState();
 
-        if(currentWallState != WallState.None)
+        //  Nudge the player's position based on hitting the level
+        if(nudgePos != transform.position)
         {
-            if(lastWallState == WallState.None)
-            {
-                //  Store velocity
-                Vector2 rbV = rbody2d.velocity;
-                rbody2d.bodyType = RigidbodyType2D.Kinematic;
-                rbody2d.MovePosition(nudgePos);
+            //  Store velocity
+            Vector2 rbV = rbody2d.velocity;
+            rbody2d.bodyType = RigidbodyType2D.Kinematic;
+            rbody2d.MovePosition(nudgePos);
 
-                if (!isGrounded)
-                {
-                    rbody2d.bodyType = RigidbodyType2D.Dynamic;
-                    //  Restore previous velocity
-                    rbody2d.velocity = rbV;
-                }
-            }
-            //  Stop vertical movement if jumped sideways up into a wall
-            if(!isGrounded && rbody2d.velocity.y > 0f
-                && (currentWallState == WallState.OnLeft && rbody2d.velocity.x < 0f || currentWallState == WallState.OnRight && rbody2d.velocity.x > 0f))
+            if (!isGrounded)
             {
-                rbody2d.velocity = Vector2.zero;
+                rbody2d.bodyType = RigidbodyType2D.Dynamic;
+                //  Restore previous velocity
+                rbody2d.velocity = rbV;
             }
+        }
+
+        //  Stop the player if they jump up into a wall
+        if(!isGrounded && rbody2d.velocity.y > 0f
+                && (currentWallState == WallState.OnLeft && rbody2d.velocity.x < 0f || currentWallState == WallState.OnRight && rbody2d.velocity.x > 0f))
+        {
+            rbody2d.velocity = Vector2.zero;
         }
 
         if (movementDirection != Vector2.zero)
@@ -170,7 +171,6 @@ public class Player : MonoBehaviour
                 }
             }
             #endregion
-            
 
             #region Jump
             if (movementDirection.y > 0)
@@ -188,7 +188,6 @@ public class Player : MonoBehaviour
         {
             if ((currentWallState == WallState.OnLeft && movementDirection.x < 0f) || (currentWallState == WallState.OnRight && movementDirection.x > 0f))
             {
-                //rbody2d.velocity = Vector2.zero;
                 ChangeRBodyStateTo(RigidbodyType2D.Kinematic);
             }
             else
@@ -200,7 +199,7 @@ public class Player : MonoBehaviour
 
     Vector2 UpdateMovementState()
     {
-        Vector2 nudgeDelta = transform.position;
+        Vector2 nudgePoint = transform.position;
 
         currentWallState = WallState.None;
         bool isStillGrounded = false;
@@ -211,58 +210,54 @@ public class Player : MonoBehaviour
             //  Check Ground
             if (contact.normal.y > 0f)
             {
-                //  Check if falling
-                if(rbody2d.velocity.y <= 0f)
+                if(isGrounded)
                 {
-                    //  Ignore grounding on the touching wall
-                    //  need to improve this because the wall state is not current at this point in the code
-                    if (currentWallState == WallState.None
-                        || (currentWallState == WallState.OnRight && contact.point.x < GetMaxBound().x)
-                        || (currentWallState == WallState.OnLeft && contact.point.x > GetMinBound().x))
+                    isStillGrounded = true;
+                }
+                //  Check if falling
+                else if(!isGrounded && rbody2d.velocity.y <= 0f)
+                {
+                    float groundHitY = GroundCheck();
+
+                    if (groundHitY != float.NegativeInfinity)
                     {
                         ChangeGroundedStateTo(true);
 
-                        groundPoint.x = transform.position.x;
-                        groundPoint.y = contact.point.y - contact.separation / 2f;
-
-                        //nudgeDelta.y = groundPoint.y;
+                        nudgePoint.y = groundHitY + contactOffset.y;
                     }
                 }
-
-                isStillGrounded = true;
             }
             #endregion
 
             #region Check Walls
             //  Check Walls
             //  This ignores any contacts that are below this Collider's bounds
-            if (contact.normal.x != 0f && contact.point.y > GetMinBound().y)
+            if (contact.normal.x != 0f)
             {
-                double offset = contactOffset.x;
-                double deltaX = 0f;
+                float wallHitX = 0f;
 
-                wallPoint.y = transform.position.y;
-                wallPoint.x = contact.point.x;
-
-                //  Check Right Side
-                if (contact.normal.x < 0f)
+                if (movementDirection.x > 0f)
                 {
-                    currentWallState = WallState.OnRight;
+                    wallHitX = WallCheck(Vector2.right);
 
-                    deltaX -= offset;
-                    wallPoint.x += contact.separation / 2f;
+                    if (wallHitX != float.NegativeInfinity)
+                    {
+                        nudgePoint.x = wallHitX - contactOffset.x;
+
+                        currentWallState = WallState.OnRight;
+                    }
                 }
-
-                //  Check Left Side
-                if (contact.normal.x > 0f)
+                else if (movementDirection.x < 0f)
                 {
-                    currentWallState = WallState.OnLeft;
+                    wallHitX = WallCheck(Vector2.left);
 
-                    deltaX += offset;
-                    wallPoint.x -= contact.separation / 2f;
+                    if (wallHitX != float.NegativeInfinity)
+                    {
+                        nudgePoint.x = wallHitX + contactOffset.x;
+
+                        currentWallState = WallState.OnLeft;
+                    }
                 }
-
-                nudgeDelta.x = wallPoint.x + (float)deltaX;
             }
             #endregion
         }
@@ -273,12 +268,66 @@ public class Player : MonoBehaviour
             ChangeGroundedStateTo(false);
         }
 
-        if(currentWallState == WallState.None)
+        return nudgePoint;
+    }
+
+    float GroundCheck()
+    {
+        float hitY = float.NegativeInfinity;
+
+        RaycastHit2D leftHit, rightHit;
+
+        Vector2 leftPos = (Vector2)transform.position;
+        leftPos.x += minBounds.x;
+        Vector2 rightPos = leftPos;
+        rightPos.x += maxBounds.x * 2f;
+
+        leftHit = Physics2D.Raycast(leftPos, Vector2.down, maxBounds.y * 2f, groundLayer.value);
+        rightHit = Physics2D.Raycast(rightPos, Vector2.down, maxBounds.y * 2f, groundLayer.value);
+
+        if(leftHit.normal == Vector2.up)
         {
-            wallPoint = Vector2.negativeInfinity;
+            hitY = leftHit.point.y;
+        }
+        else if(rightHit.normal == Vector2.up)
+        {
+            hitY = rightHit.point.y;
         }
 
-        return nudgeDelta;
+        return hitY;
+    }
+
+    float WallCheck(Vector2 wallCheckDirection)
+    {
+        float hitX = float.NegativeInfinity;
+
+        RaycastHit2D topHit, bottomHit, midHit;
+
+        Vector2 midPos = transform.position;
+
+        Vector2 topPos = midPos;
+        topPos.y += minBounds.y;
+        Vector2 bottomPos = midPos;
+        bottomPos.y += minBounds.y;
+
+        topHit = Physics2D.Raycast(topPos, wallCheckDirection, maxBounds.x * 2f, groundLayer.value);
+        bottomHit = Physics2D.Raycast(bottomPos, wallCheckDirection, maxBounds.x * 2f, groundLayer.value);
+        midHit = Physics2D.Raycast(midPos, wallCheckDirection, maxBounds.x * 2f, groundLayer.value);
+
+        if (topHit.normal == -wallCheckDirection)
+        {
+            hitX = topHit.point.x;
+        }
+        else if (bottomHit.normal == -wallCheckDirection)
+        {
+            hitX = bottomHit.point.x;
+        }
+        else if (midHit.normal == -wallCheckDirection)
+        {
+            hitX = midHit.point.x;
+        }
+
+        return hitX;
     }
 
     void ChangeGroundedStateTo(bool value)
@@ -295,8 +344,6 @@ public class Player : MonoBehaviour
             ChangeRBodyStateTo(RigidbodyType2D.Dynamic);
 
             rbody2d.AddForce(movementDelta * moveSpeed * 10f, ForceMode2D.Force);
-
-            groundPoint = Vector2.negativeInfinity;
         }
     }
 
@@ -369,19 +416,5 @@ public class Player : MonoBehaviour
             }
             Gizmos.DrawLine(transform.position, point.point);
         }
-
-        /*if (groundPoint.y != float.NegativeInfinity)
-        {
-            Gizmos.color = Color.red;
-
-            Gizmos.DrawLine(transform.position, groundPoint);
-        }
-
-        if (wallPoint.y != float.NegativeInfinity)
-        {
-            Gizmos.color = Color.green;
-
-            Gizmos.DrawLine(transform.position, wallPoint);
-        }*/
     }
 }
